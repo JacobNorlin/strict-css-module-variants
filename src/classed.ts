@@ -63,7 +63,7 @@ type VariantValues<V> = {
 type StyleMergedProps<Target extends KnownTarget, Variants> = React.ComponentProps<Target> &
   VariantValues<Variants>;
 
-export function classed<Style extends object>(style: Style) {
+export function createClassed<Style extends object>(style: Style) {
   return function createVariantElement<
     Target extends KnownTarget,
     Variants extends StyleVariant<Style>

@@ -27,10 +27,12 @@ Relies on `typescript-plugin-css-modules` for css module type inference.
 ```tsx
 //App.tsx
 import style from "App.module.css";
-import { classed } from "..";
+import { createClassed } from "strict-css-module-variants";
+
+const classed = createClassed(style);
 
 //Creates an element builder scoped to the css module
-const Box = classed(style)("div", {
+const Box = classed("div", {
   variants: {
     color: {
       //Name of variant: className. Is strictly typed to the classes available in the css module
