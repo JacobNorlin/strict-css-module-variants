@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Checking that default variants are contrained by the defined variants
+ * Checking that default variants are constrained by the defined variants
  * So:
  *
  * variants: {
@@ -19,7 +19,7 @@ type DefaultVariant<T> = {
 };
 
 /**
- * Shape like
+ * Enforce variant object shape
  * {
  *  variantType: {
  *    variantName: className
@@ -46,7 +46,7 @@ type AnyComponent<P = any> = React.ComponentType<P>;
 type KnownTarget = keyof JSX.IntrinsicElements | AnyComponent;
 
 /**
- * For defining the variants a props, shaped like
+ * For defining the variants props, shaped like
  * {
  *  variantType: variantName
  * }
