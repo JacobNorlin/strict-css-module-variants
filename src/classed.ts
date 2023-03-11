@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 
 /**
  * Checking that default variants are constrained by the defined variants
@@ -51,11 +51,13 @@ type KnownTarget = keyof JSX.IntrinsicElements | AnyComponent;
  *  variantType: variantName
  * }
  */
-type VariantValues<V> = {
-  [U in keyof V]?: {
-    [K in keyof V[U]]: K;
-  }[keyof V[U]];
-};
+type VariantValues<V> = undefined extends V
+  ? any
+  : {
+      [U in keyof V]?: {
+        [K in keyof V[U]]: K;
+      }[keyof V[U]];
+    };
 
 /**
  * Merge the underlying components props with optional variant props
@@ -66,66 +68,68 @@ type StyleMergedProps<Target extends KnownTarget, Variants> = React.ComponentPro
 export function createClassed<Style extends object>(style: Style) {
   return function createVariantElement<
     Target extends KnownTarget,
-    Variants extends StyleVariant<Style>
+    Variants extends StyleVariant<Style> = any, // Need to set default for cases where variants are not defined
   >(target: Target, def: VariantDefinition<Style, Variants>) {
-    //cba to type this
+    // cba to type this
     const softDef = def as VariantDefinition<Style, Variants>;
-    const variants = softDef.variants;
+    const { variants } = softDef;
     const variantNames = Object.keys(variants || {});
     const defaultVariants = softDef.defaultVariants || ({} as any);
-    const Element = (props: StyleMergedProps<Target, Variants>) => {
-      let classNames = [];
+    const Element = (props: StyleMergedProps<Target, Variants>, ref?: React.Ref<Target>) => {
+      const classNames = [];
 
-      //Variants might not be defined
+      // Variants might not be defined
       if (variants !== undefined) {
-        for (const variantName of variantNames) {
+        for (let i = 0; i < variantNames.length; i++) {
+          const variantName = variantNames[i];
           const propValue = props[variantName];
-          //No variant value supplied through props
+          // No variant value supplied through props
           if (!propValue) {
-            //Check if there is a configured default variant
+            // Check if there is a configured default variant
             const defaultVariant = defaultVariants[variantName];
-            //Get the classname used in the variant
+            // Get the classname used in the variant
             const variantClassName = variants[variantName][defaultVariant];
-            //Resolve the actual class from the style
+            // Resolve the actual class from the style
             const className = style[variantClassName];
             classNames.push(className);
           } else {
-            //Get classname used by the variant
+            // Get classname used by the variant
             const variantClassName = variants[variantName][propValue];
-            //Resolve actual class from the style
+            // Resolve actual class from the style
             const className = style[variantClassName];
             classNames.push(className);
           }
         }
       }
 
-      //Append the base classes if they exist
+      // Append the base classes if they exist
       if (def.classNames !== undefined) {
-        //Resolve actual class names
+        // Resolve actual class names
         const realizedClassNames = def.classNames.map((className) => style[className]);
         Array.prototype.push.apply(classNames, realizedClassNames);
       }
 
+      if (props.className) {
+        classNames.push(props.className);
+      }
       const className = classNames.join(" ");
-
       const elm = React.createElement<typeof props>(target, {
         ...props,
+        ref: ref,
         className: className,
       });
       return elm;
     };
 
-    //Try to pass on display name of the underlying component
+    // Try to pass on display name of the underlying component
     if (Array.prototype.toString.call(target) === "[object String]") {
-      //JSXIntrinsicElement should reuse the same display name
-      Element.displayName = target;
-    } else {
-      //If we are wrapping a react element reuse the displayName if possible
-      if (Object.prototype.hasOwnProperty.call(target, "displayName")) {
-        Element.displayName = (target as any).displayName;
-      }
+      // JSXIntrinsicElement should reuse the same display name
+      Element.displayName = `Classed.${target}`;
+    } else if (Object.prototype.hasOwnProperty.call(target, "displayName")) {
+      // If we are wrapping a react element reuse the displayName if possible
+      Element.displayName = `Classed.${(target as any).displayName}`;
     }
 
-    return Element;
+    return forwardRef(Element);
   };
 }
